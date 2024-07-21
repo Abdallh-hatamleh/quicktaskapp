@@ -6,6 +6,21 @@ create table tasks (id int AUTO_INCREMENT PRIMARY KEY, project_id int not null ,
 
 
 <?php 
+try {
+  $conn = new pdo("mysql:host=localhost;dbname=taskapp","root","");
+  $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+}
+catch (Exception $e) {
+  echo "". $e->getMessage();
+    if (str_contains($e->getMessage(),"Unknown database")) {
+        $conn = new pdo ("mysql:host=localhost","root","");
+        $conn->query("create database taskapp");
+        $conn = new pdo ("mysql:host=localhost;dbname=taskapp","root","");
+        $conn->query("create table projects (id int primary KEY AUTO_INCREMENT, title varchar(255) not null, description varchar(255) null, create_date date DEFAULT(CURRENT_DATE())); ");
+        $conn->query("create table tasks (id int AUTO_INCREMENT PRIMARY KEY, project_id int not null ,FOREIGN KEY (project_id) REFERENCES projects(id), title varchar(255) not null, status varchar(255) not null, created_date date DEFAULT(CURRENT_DATE()), created_time time DEFAULT(CURRENT_TIME()));");
+    }
+    else echo "ERROR : ". $e->getMessage();
+}
 $conn = new pdo("mysql:host=localhost;dbname=taskapp","root","");
 if ($_SERVER['REQUEST_METHOD' ] == 'POST') {
     if (isset($_POST['delete'])) {
@@ -35,6 +50,10 @@ if ($_SERVER['REQUEST_METHOD' ] == 'POST') {
         $query = $conn->query("delete from tasks where id=$id");
         $_POST['view'] = 'any';
         $_POST['id'] = $_POST['proj_id'];
+    }
+    if (isset($_POST['addProj'])) {
+      $title = $_POST['title'];
+      $query = $conn->query("insert into projects (title) values ('$title')");
     }
 }
 
@@ -69,7 +88,6 @@ body {
 .tasks {
     /* background-color: grey; */
     padding: 1rem;
-
 }
 .editTask {
     height: fit-content;
@@ -78,6 +96,11 @@ body {
 </head>
 <body>
   <div class="projects">
+    <form action="" method="post">
+      <h2 style="color:white;">Add a project :</h2>
+      <input type="text" name="title">
+      <input type="submit" name="addProj">
+    </form>
     <h2 style="color: white;">Projects : </h2>
  <?php 
  $query = $conn->prepare("select * from projects");
